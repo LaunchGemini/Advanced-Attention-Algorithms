@@ -29,4 +29,20 @@ class AFT_FULL(nn.Module):
             if isinstance(m, nn.Conv2d):
                 init.kaiming_normal_(m.weight, mode='fan_out')
                 if m.bias is not None:
- 
+                    init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm2d):
+                init.constant_(m.weight, 1)
+                init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                init.normal_(m.weight, std=0.001)
+                if m.bias is not None:
+                    init.constant_(m.bias, 0)
+
+    def forward(self, input):
+
+        bs, n,dim = input.shape
+
+        q = self.fc_q(input) #bs,n,dim
+        k = self.fc_k(input).view(1,bs,n,dim) #1,bs,n,dim
+        v = self.fc_v(input).view(1,bs,n,dim) #1,bs,n,dim
+  
