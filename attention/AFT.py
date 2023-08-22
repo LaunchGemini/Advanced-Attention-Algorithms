@@ -45,4 +45,20 @@ class AFT_FULL(nn.Module):
         q = self.fc_q(input) #bs,n,dim
         k = self.fc_k(input).view(1,bs,n,dim) #1,bs,n,dim
         v = self.fc_v(input).view(1,bs,n,dim) #1,bs,n,dim
-  
+        
+        numerator=torch.sum(torch.exp(k+self.position_biases.view(n,1,-1,1))*v,dim=2) #n,bs,dim
+        denominator=torch.sum(torch.exp(k+self.position_biases.view(n,1,-1,1)),dim=2) #n,bs,dim
+
+        out=(numerator/denominator) #n,bs,dim
+        out=self.sigmoid(q)*(out.permute(1,0,2)) #bs,n,dim
+
+        return out
+
+
+if __name__ == '__main__':
+    input=torch.randn(50,49,512)
+    aft_full = AFT_FULL(d_model=512, n=49)
+    output=aft_full(input)
+    print(output.shape)
+
+    
