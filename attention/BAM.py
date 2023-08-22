@@ -34,4 +34,10 @@ class ChannelAttention(nn.Module):
 class SpatialAttention(nn.Module):
     def __init__(self,channel,reduction=16,num_layers=3,dia_val=2):
         super().__init__()
-     
+        self.sa=nn.Sequential()
+        self.sa.add_module('conv_reduce1',nn.Conv2d(kernel_size=1,in_channels=channel,out_channels=channel//reduction))
+        self.sa.add_module('bn_reduce1',nn.BatchNorm2d(channel//reduction))
+        self.sa.add_module('relu_reduce1',nn.ReLU())
+        for i in range(num_layers):
+            self.sa.add_module('conv_%d'%i,nn.Conv2d(kernel_size=3,in_channels=channel//reduction,out_channels=channel//reduction,padding=1,dilation=dia_val))
+            self.sa.add_module('bn_%d'%i,nn.BatchNorm2d(channel/
