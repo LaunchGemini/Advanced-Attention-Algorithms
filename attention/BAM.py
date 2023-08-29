@@ -78,4 +78,14 @@ class BAMBlock(nn.Module):
     def forward(self, x):
         b, c, _, _ = x.size()
         sa_out=self.sa(x)
-       
+        ca_out=self.ca(x)
+        weight=self.sigmoid(sa_out+ca_out)
+        out=(1+weight)*x
+        return out
+
+
+if __name__ == '__main__':
+    input=torch.randn(50,512,7,7)
+    bam = BAMBlock(channel=512,reduction=16,dia_val=2)
+    output=bam(input)
+    print(output.shape)
