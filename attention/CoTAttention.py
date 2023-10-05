@@ -21,4 +21,23 @@ class CoTAttention(nn.Module):
             nn.ReLU()
         )
         self.value_embed=nn.Sequential(
-            nn.Conv2d(dim,di
+            nn.Conv2d(dim,dim,1,bias=False),
+            nn.BatchNorm2d(dim)
+        )
+
+        factor=4
+        self.attention_embed=nn.Sequential(
+            nn.Conv2d(2*dim,2*dim//factor,1,bias=False),
+            nn.BatchNorm2d(2*dim//factor),
+            nn.ReLU(),
+            nn.Conv2d(2*dim//factor,kernel_size*kernel_size*dim,1)
+        )
+
+
+    def forward(self, x):
+        bs,c,h,w=x.shape
+        k1=self.key_embed(x) #bs,c,h,w
+        v=self.value_embed(x).view(bs,c,-1) #bs,c,h,w
+
+        y=torch.cat([k1,x],dim=1) #bs,2c,h,w
+        att=self.att
