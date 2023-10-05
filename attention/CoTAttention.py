@@ -40,4 +40,20 @@ class CoTAttention(nn.Module):
         v=self.value_embed(x).view(bs,c,-1) #bs,c,h,w
 
         y=torch.cat([k1,x],dim=1) #bs,2c,h,w
-        att=self.att
+        att=self.attention_embed(y) #bs,c*k*k,h,w
+        att=att.reshape(bs,c,self.kernel_size*self.kernel_size,h,w)
+        att=att.mean(2,keepdim=False).view(bs,c,-1) #bs,c,h*w
+        k2=F.softmax(att,dim=-1)*v
+        k2=k2.view(bs,c,h,w)
+
+
+        return k1+k2
+
+
+if __name__ == '__main__':
+    input=torch.randn(50,512,7,7)
+    cot = CoTAttention(dim=512,kernel_size=3)
+    output=cot(input)
+    print(output.shape)
+
+    
