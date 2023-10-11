@@ -20,4 +20,15 @@ class EMSA(nn.Module):
 
         self.ratio=ratio
         if(self.ratio>1):
-            self.sr=nn.Sequential
+            self.sr=nn.Sequential()
+            self.sr_conv=nn.Conv2d(d_model,d_model,kernel_size=ratio+1,stride=ratio,padding=ratio//2,groups=d_model)
+            self.sr_ln=nn.LayerNorm(d_model)
+
+        self.apply_transform=apply_transform and h>1
+        if(self.apply_transform):
+            self.transform=nn.Sequential()
+            self.transform.add_module('conv',nn.Conv2d(h,h,kernel_size=1,stride=1))
+            self.transform.add_module('softmax',nn.Softmax(-1))
+            self.transform.add_module('in',nn.InstanceNorm2d(h))
+
+ 
