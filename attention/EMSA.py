@@ -50,4 +50,17 @@ class EMSA(nn.Module):
                 init.constant_(m.bias, 0)
             elif isinstance(m, nn.Linear):
                 init.normal_(m.weight, std=0.001)
- 
+                if m.bias is not None:
+                    init.constant_(m.bias, 0)
+
+    def forward(self, queries, keys, values, attention_mask=None, attention_weights=None):
+
+        b_s, nq ,c = queries.shape
+        nk = keys.shape[1]
+
+        q = self.fc_q(queries).view(b_s, nq, self.h, self.d_k).permute(0, 2, 1, 3)  # (b_s, h, nq, d_k)
+
+        if(self.ratio>1):
+            x=queries.permute(0,2,1).view(b_s,c,self.H,self.W) #bs,c,H,W
+            x=self.sr_conv(x) #bs,c,h,w
+            x=x.contiguous().view(b_s,c,-1).permute(0,2,1) #bs
