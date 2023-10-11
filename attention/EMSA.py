@@ -63,4 +63,14 @@ class EMSA(nn.Module):
         if(self.ratio>1):
             x=queries.permute(0,2,1).view(b_s,c,self.H,self.W) #bs,c,H,W
             x=self.sr_conv(x) #bs,c,h,w
-            x=x.contiguous().view(b_s,c,-1).permute(0,2,1) #bs
+            x=x.contiguous().view(b_s,c,-1).permute(0,2,1) #bs,n',c
+            x=self.sr_ln(x)
+            k = self.fc_k(x).view(b_s, -1, self.h, self.d_k).permute(0, 2, 3, 1)  # (b_s, h, d_k, n')
+            v = self.fc_v(x).view(b_s, -1, self.h, self.d_v).permute(0, 2, 1, 3)  # (b_s, h, n', d_v)
+        else:
+            k = self.fc_k(keys).view(b_s, nk, self.h, self.d_k).permute(0, 2, 3, 1)  # (b_s, h, d_k, nk)
+            v = self.fc_v(values).view(b_s, nk, self.h, self.d_v).permute(0, 2, 1, 3)  # (b_s, h, nk, d_v)
+
+        if(self.apply_transform):
+            att = torch.matmul(q, k) / np.sqrt(self.d_k)  # (b_s, h, nq, n')
+            att = self.transform(att) 
