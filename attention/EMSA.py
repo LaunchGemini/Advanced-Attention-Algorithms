@@ -73,4 +73,19 @@ class EMSA(nn.Module):
 
         if(self.apply_transform):
             att = torch.matmul(q, k) / np.sqrt(self.d_k)  # (b_s, h, nq, n')
-            att = self.transform(att) 
+            att = self.transform(att) # (b_s, h, nq, n')
+        else:
+            att = torch.matmul(q, k) / np.sqrt(self.d_k)  # (b_s, h, nq, n')
+            att = torch.softmax(att, -1) # (b_s, h, nq, n')
+
+
+        if attention_weights is not None:
+            att = att * attention_weights
+        if attention_mask is not None:
+            att = att.masked_fill(attention_mask, -np.inf)
+        
+        att=self.dropout(att)
+
+        out = torch.matmul(att, v).permute(0, 2, 1, 3).contiguous().view(b_s, nq, self.h * self.d_v)  # (b_s, nq, h*d_v)
+        out = self.fc_o(out)  # (b_s, nq, d_model)
+    
