@@ -79,3 +79,32 @@ class MUSEAttention(nn.Module):
 
         q = self.fc_q(queries).view(b_s, nq, self.h, self.d_k).permute(0, 2, 1, 3)  # (b_s, h, nq, d_k)
         k = self.fc_k(keys).view(b_s, nk, self.h, self.d_k).permute(0, 2, 3, 1)  # (b_s, h, d_k, nk)
+        v = self.fc_v(values).view(b_s, nk, self.h, self.d_v).permute(0, 2, 1, 3)  # (b_s, h, nk, d_v)
+
+        att = torch.matmul(q, k) / np.sqrt(self.d_k)  # (b_s, h, nq, nk)
+        if attention_weights is not None:
+            att = att * attention_weights
+        if attention_mask is not None:
+            att = att.masked_fill(attention_mask, -np.inf)
+        att = torch.softmax(att, -1)
+        att=self.dropout(att)
+
+        out = torch.matmul(att, v).permute(0, 2, 1, 3).contiguous().view(b_s, nq, self.h * self.d_v)  # (b_s, nq, h*d_v)
+        out = self.fc_o(out)  # (b_s, nq, d_model)
+
+        v2=v.permute(0,1,3,2).contiguous().view(b_s,-1,nk) #bs,dim,n
+        self.dy_paras=nn.Parameter(self.softmax(self.dy_paras))
+        out2=self.dy_paras[0]*self.conv1(v2)+self.dy_paras[1]*self.conv3(v2)+self.dy_paras[2]*self.conv5(v2)
+        out2=out2.permute(0,2,1) #bs.n.dim
+
+        out=out+out2
+        return out
+
+
+if __name__ == '__main__':
+    input=torch.randn(50,49,512)
+    sa = MUSEAttention(d_model=512, d_k=512, d_v=512, h=8)
+    output=sa(input,input,input)
+    print(output.shape)
+
+    
