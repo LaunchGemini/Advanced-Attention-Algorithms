@@ -18,4 +18,18 @@ class PSA(nn.Module):
         self.se_blocks=[]
         for i in range(S):
             self.se_blocks.append(nn.Sequential(
-           
+                nn.AdaptiveAvgPool2d(1),
+                nn.Conv2d(channel//S, channel // (S*reduction),kernel_size=1, bias=False),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(channel // (S*reduction), channel//S,kernel_size=1, bias=False),
+                nn.Sigmoid()
+            ))
+        
+        self.softmax=nn.Softmax(dim=1)
+
+
+    def init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                init.kaiming_normal_(m.weight, mode='fan_out')
+                if m.bias is not N
