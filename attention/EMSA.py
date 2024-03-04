@@ -88,4 +88,13 @@ class EMSA(nn.Module):
 
         out = torch.matmul(att, v).permute(0, 2, 1, 3).contiguous().view(b_s, nq, self.h * self.d_v)  # (b_s, nq, h*d_v)
         out = self.fc_o(out)  # (b_s, nq, d_model)
+        return out
+
+
+if __name__ == '__main__':
+    input=torch.randn(50,64,512)
+    emsa = EMSA(d_model=512, d_k=512, d_v=512, h=8,H=8,W=8,ratio=2,apply_transform=True)
+    output=emsa(input,input,input)
+    print(output.shape)
+
     
