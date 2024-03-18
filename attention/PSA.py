@@ -48,4 +48,25 @@ class PSA(nn.Module):
         #Step1:SPC module
         SPC_out=x.view(b,self.S,c//self.S,h,w) #bs,s,ci,h,w
         for idx,conv in enumerate(self.convs):
-      
+            SPC_out[:,idx,:,:,:]=conv(SPC_out[:,idx,:,:,:])
+
+        #Step2:SE weight
+        SE_out=torch.zeros_like(SPC_out)
+        for idx,se in enumerate(self.se_blocks):
+            SE_out[:,idx,:,:,:]=se(SPC_out[:,idx,:,:,:])
+        
+        #Step3:Softmax
+        softmax_out=self.softmax(SE_out)
+
+        #Step4:SPA
+        PSA_out=SPC_out*softmax_out
+        PSA_out=PSA_out.view(b,-1,h,w)
+
+        return PSA_out
+
+
+if __name__ == '__main__':
+    input=torch.randn(50,512,7,7)
+    psa = PSA(channel=512,reduction=8)
+    output=psa(input)
+  
