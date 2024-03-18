@@ -29,4 +29,13 @@ class ParallelPolarizedSelfAttention(nn.Module):
         channel_wv=channel_wv.reshape(b,c//2,-1) #bs,c//2,h*w
         channel_wq=channel_wq.reshape(b,-1,1) #bs,h*w,1
         channel_wq=self.softmax_channel(channel_wq)
-        channel_wz=torch.matmu
+        channel_wz=torch.matmul(channel_wv,channel_wq).unsqueeze(-1) #bs,c//2,1,1
+        channel_weight=self.sigmoid(self.ln(self.ch_wz(channel_wz).reshape(b,c,1).permute(0,2,1))).permute(0,2,1).reshape(b,c,1,1) #bs,c,1,1
+        channel_out=channel_weight*x
+
+        #Spatial-only Self-Attention
+        spatial_wv=self.sp_wv(x) #bs,c//2,h,w
+        spatial_wq=self.sp_wq(x) #bs,c//2,h,w
+        spatial_wq=self.agp(spatial_wq) #bs,c//2,1,1
+        spatial_wv=spatial_wv.reshape(b,c//2,-1) #bs,c//2,h*w
+        spatial_wq=spatial_wq.permute(0,2,3,1).reshap
