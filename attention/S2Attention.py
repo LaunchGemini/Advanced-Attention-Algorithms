@@ -13,4 +13,23 @@ def spatial_shift1(x):
     return x
 
 
-def spatial
+def spatial_shift2(x):
+    b,w,h,c = x.size()
+    x[:,:,1:,:c//4] = x[:,:,:h-1,:c//4]
+    x[:,:,:h-1,c//4:c//2] = x[:,:,1:,c//4:c//2]
+    x[:,1:,:,c//2:c*3//4] = x[:,:w-1,:,c//2:c*3//4]
+    x[:,:w-1,:,3*c//4:] = x[:,1:,:,3*c//4:]
+    return x
+
+
+class SplitAttention(nn.Module):
+    def __init__(self,channel=512,k=3):
+        super().__init__()
+        self.channel=channel
+        self.k=k
+        self.mlp1=nn.Linear(channel,channel,bias=False)
+        self.gelu=nn.GELU()
+        self.mlp2=nn.Linear(channel,channel*k,bias=False)
+        self.softmax=nn.Softmax(1)
+    
+    def f
