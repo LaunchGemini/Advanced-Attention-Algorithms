@@ -32,4 +32,22 @@ class SplitAttention(nn.Module):
         self.mlp2=nn.Linear(channel,channel*k,bias=False)
         self.softmax=nn.Softmax(1)
     
-    def f
+    def forward(self,x_all):
+        b,k,h,w,c=x_all.shape
+        x_all=x_all.reshape(b,k,-1,c) #bs,k,n,c
+        a=torch.sum(torch.sum(x_all,1),1) #bs,c
+        hat_a=self.mlp2(self.gelu(self.mlp1(a))) #bs,kc
+        hat_a=hat_a.reshape(b,self.k,c) #bs,k,c
+        bar_a=self.softmax(hat_a) #bs,k,c
+        attention=bar_a.unsqueeze(-2) # #bs,k,1,c
+        out=attention*x_all # #bs,k,n,c
+        out=torch.sum(out,1).reshape(b,h,w,c)
+        return out
+
+
+class S2Attention(nn.Module):
+
+    def __init__(self, channels=512 ):
+        super().__init__()
+        self.mlp1 = nn.Linear(channels,channels*3)
+   
