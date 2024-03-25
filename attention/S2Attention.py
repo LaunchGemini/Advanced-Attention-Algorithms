@@ -70,4 +70,9 @@ class S2Attention(nn.Module):
 
 
 if __name__ == '__main__':
-    input=torch.randn(50,5
+    input=torch.randn(50,512,7,7)
+    s2att = S2Attention(channels=512)
+    output=s2att(input)
+    print(output.shape)
+
+    
