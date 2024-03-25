@@ -50,4 +50,24 @@ class S2Attention(nn.Module):
     def __init__(self, channels=512 ):
         super().__init__()
         self.mlp1 = nn.Linear(channels,channels*3)
-   
+        self.mlp2 = nn.Linear(channels,channels)
+        self.split_attention = SplitAttention()
+
+    def forward(self, x):
+        b,c,w,h = x.size()
+        x=x.permute(0,2,3,1)
+        x = self.mlp1(x)
+        x1 = spatial_shift1(x[:,:,:,:c])
+        x2 = spatial_shift2(x[:,:,:,c:c*2])
+        x3 = x[:,:,:,c*2:]
+        x_all=torch.stack([x1,x2,x3],1)
+        a = self.split_attention(x_all)
+        x = self.mlp2(a)
+        x=x.permute(0,3,1,2)
+        return x
+
+        
+
+
+if __name__ == '__main__':
+    input=torch.randn(50,5
