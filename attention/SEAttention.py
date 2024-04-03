@@ -30,4 +30,19 @@ class SEAttention(nn.Module):
             elif isinstance(m, nn.Linear):
                 init.normal_(m.weight, std=0.001)
                 if m.bias is not None:
-            
+                    init.constant_(m.bias, 0)
+
+    def forward(self, x):
+        b, c, _, _ = x.size()
+        y = self.avg_pool(x).view(b, c)
+        y = self.fc(y).view(b, c, 1, 1)
+        return x * y.expand_as(x)
+
+
+if __name__ == '__main__':
+    input=torch.randn(50,512,7,7)
+    se = SEAttention(channel=512,reduction=8)
+    output=se(input)
+    print(output.shape)
+
+    
