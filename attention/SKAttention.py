@@ -17,4 +17,26 @@ class SKAttention(nn.Module):
                 nn.Sequential(OrderedDict([
                     ('conv',nn.Conv2d(channel,channel,kernel_size=k,padding=k//2,groups=group)),
                     ('bn',nn.BatchNorm2d(channel)),
-                  
+                    ('relu',nn.ReLU())
+                ]))
+            )
+        self.fc=nn.Linear(channel,self.d)
+        self.fcs=nn.ModuleList([])
+        for i in range(len(kernels)):
+            self.fcs.append(nn.Linear(self.d,channel))
+        self.softmax=nn.Softmax(dim=0)
+
+
+
+    def forward(self, x):
+        bs, c, _, _ = x.size()
+        conv_outs=[]
+        ### split
+        for conv in self.convs:
+            conv_outs.append(conv(x))
+        feats=torch.stack(conv_outs,0)#k,bs,channel,h,w
+
+        ### fuse
+        U=sum(conv_outs) #bs,c,h,w
+
+        ### reduction chann
