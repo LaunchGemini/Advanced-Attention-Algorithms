@@ -51,4 +51,14 @@ class ScaledDotProductAttention(nn.Module):
         Computes
         :param queries: Queries (b_s, nq, d_model)
         :param keys: Keys (b_s, nk, d_model)
-        :param values: Values (b_s, nk,
+        :param values: Values (b_s, nk, d_model)
+        :param attention_mask: Mask over attention values (b_s, h, nq, nk). True indicates masking.
+        :param attention_weights: Multiplicative weights for attention values (b_s, h, nq, nk).
+        :return:
+        '''
+        b_s, nq = queries.shape[:2]
+        nk = keys.shape[1]
+
+        q = self.fc_q(queries).view(b_s, nq, self.h, self.d_k).permute(0, 2, 1, 3)  # (b_s, h, nq, d_k)
+        k = self.fc_k(keys).view(b_s, nk, self.h, self.d_k).permute(0, 2, 3, 1)  # (b_s, h, d_k, nk)
+        v = self.fc_v(values).view(b_s, nk, self
