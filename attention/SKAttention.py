@@ -39,4 +39,28 @@ class SKAttention(nn.Module):
         ### fuse
         U=sum(conv_outs) #bs,c,h,w
 
-        ### reduction chann
+        ### reduction channel
+        S=U.mean(-1).mean(-1) #bs,c
+        Z=self.fc(S) #bs,d
+
+        ### calculate attention weight
+        weights=[]
+        for fc in self.fcs:
+            weight=fc(Z)
+            weights.append(weight.view(bs,c,1,1)) #bs,channel
+        attention_weughts=torch.stack(weights,0)#k,bs,channel,1,1
+        attention_weughts=self.softmax(attention_weughts)#k,bs,channel,1,1
+
+        ### fuse
+        V=(attention_weughts*feats).sum(0)
+        return V
+
+        
+
+
+
+
+if __name__ == '__main__':
+    input=torch.randn(50,512,7,7)
+    se = SKAttention(channel=512,reduction=8)
+    out
