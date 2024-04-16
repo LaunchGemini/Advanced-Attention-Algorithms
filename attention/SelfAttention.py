@@ -61,4 +61,15 @@ class ScaledDotProductAttention(nn.Module):
 
         q = self.fc_q(queries).view(b_s, nq, self.h, self.d_k).permute(0, 2, 1, 3)  # (b_s, h, nq, d_k)
         k = self.fc_k(keys).view(b_s, nk, self.h, self.d_k).permute(0, 2, 3, 1)  # (b_s, h, d_k, nk)
-        v = self.fc_v(values).view(b_s, nk, self
+        v = self.fc_v(values).view(b_s, nk, self.h, self.d_v).permute(0, 2, 1, 3)  # (b_s, h, nk, d_v)
+
+        att = torch.matmul(q, k) / np.sqrt(self.d_k)  # (b_s, h, nq, nk)
+        if attention_weights is not None:
+            att = att * attention_weights
+        if attention_mask is not None:
+            att = att.masked_fill(attention_mask, -np.inf)
+        att = torch.softmax(att, -1)
+        att=self.dropout(att)
+
+        out = torch.matmul(att, v).permute(0, 2, 1, 3).contiguous().view(b_s, nq, self.h * self.d_v)  # (b_s, nq, h*d_v)
+        out = self.fc_o(out)  # (b_s, nq, d_mod
