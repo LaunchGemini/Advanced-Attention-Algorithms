@@ -72,4 +72,14 @@ class ScaledDotProductAttention(nn.Module):
         att=self.dropout(att)
 
         out = torch.matmul(att, v).permute(0, 2, 1, 3).contiguous().view(b_s, nq, self.h * self.d_v)  # (b_s, nq, h*d_v)
-        out = self.fc_o(out)  # (b_s, nq, d_mod
+        out = self.fc_o(out)  # (b_s, nq, d_model)
+        return out
+
+
+if __name__ == '__main__':
+    input=torch.randn(50,49,512)
+    sa = ScaledDotProductAttention(d_model=512, d_k=512, d_v=512, h=8)
+    output=sa(input,input,input)
+    print(output.shape)
+
+    
