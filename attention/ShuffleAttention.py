@@ -39,4 +39,22 @@ class ShuffleAttention(nn.Module):
     def channel_shuffle(x, groups):
         b, c, h, w = x.shape
         x = x.reshape(b, groups, -1, h, w)
-   
+        x = x.permute(0, 2, 1, 3, 4)
+
+        # flatten
+        x = x.reshape(b, -1, h, w)
+
+        return x
+
+    def forward(self, x):
+        b, c, h, w = x.size()
+        #group into subfeatures
+        x=x.view(b*self.G,-1,h,w) #bs*G,c//G,h,w
+
+        #channel_split
+        x_0,x_1=x.chunk(2,dim=1) #bs*G,c//(2*G),h,w
+
+        #channel attention
+        x_channel=self.avg_pool(x_0) #bs*G,c//(2*G),1,1
+        #x_channel=self.cweight*x_channel+self.cweight #bs*G,c//(2*G),1,1
+        x_channel=self.cweight*x_channel+self.cbias #bs*G
