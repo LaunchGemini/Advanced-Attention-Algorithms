@@ -23,4 +23,20 @@ class ShuffleAttention(nn.Module):
     def init_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                init.kaiming_
+                init.kaiming_normal_(m.weight, mode='fan_out')
+                if m.bias is not None:
+                    init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm2d):
+                init.constant_(m.weight, 1)
+                init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                init.normal_(m.weight, std=0.001)
+                if m.bias is not None:
+                    init.constant_(m.bias, 0)
+
+
+    @staticmethod
+    def channel_shuffle(x, groups):
+        b, c, h, w = x.shape
+        x = x.reshape(b, groups, -1, h, w)
+   
