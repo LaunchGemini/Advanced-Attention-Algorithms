@@ -57,4 +57,21 @@ class ShuffleAttention(nn.Module):
         #channel attention
         x_channel=self.avg_pool(x_0) #bs*G,c//(2*G),1,1
         #x_channel=self.cweight*x_channel+self.cweight #bs*G,c//(2*G),1,1
-        x_channel=self.cweight*x_channel+self.cbias #bs*G
+        x_channel=self.cweight*x_channel+self.cbias #bs*G,c//(2*G),1,1
+        x_channel=x_0*self.sigmoid(x_channel)
+
+        #spatial attention
+        x_spatial=self.gn(x_1) #bs*G,c//(2*G),h,w
+        x_spatial=self.sweight*x_spatial+self.sbias #bs*G,c//(2*G),h,w
+        x_spatial=x_1*self.sigmoid(x_spatial) #bs*G,c//(2*G),h,w
+
+        # concatenate along channel axis
+        out=torch.cat([x_channel,x_spatial],dim=1)  #bs*G,c//G,h,w
+        out=out.contiguous().view(b,-1,h,w)
+
+        # channel shuffle
+        out = self.channel_shuffle(out, 2)
+        return out
+
+
+if __name
