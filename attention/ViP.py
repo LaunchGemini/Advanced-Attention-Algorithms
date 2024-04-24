@@ -27,4 +27,16 @@ class WeightedPermuteMLP(nn.Module):
         self.proj=nn.Linear(dim,dim)
         self.proj_drop=nn.Dropout(proj_drop)
     
- 
+    def forward(self,x) :
+        B,H,W,C=x.shape
+
+        c_embed=self.mlp_c(x)
+
+        S=C//self.seg_dim
+        h_embed=x.reshape(B,H,W,self.seg_dim,S).permute(0,3,2,1,4).reshape(B,self.seg_dim,W,H*S)
+        h_embed=self.mlp_h(h_embed).reshape(B,self.seg_dim,W,H,S).permute(0,3,2,1,4).reshape(B,H,W,C)
+
+        w_embed=x.reshape(B,H,W,self.seg_dim,S).permute(0,3,1,2,4).reshape(B,self.seg_dim,H,W*S)
+        w_embed=self.mlp_w(w_embed).reshape(B,self.seg_dim,H,W,S).permute(0,2,3,1,4).reshape(B,H,W,C)
+
+        weight=(c_embed+h_embed+w_embed).permute(0,3,1,
