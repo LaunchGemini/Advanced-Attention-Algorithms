@@ -39,4 +39,21 @@ class WeightedPermuteMLP(nn.Module):
         w_embed=x.reshape(B,H,W,self.seg_dim,S).permute(0,3,1,2,4).reshape(B,self.seg_dim,H,W*S)
         w_embed=self.mlp_w(w_embed).reshape(B,self.seg_dim,H,W,S).permute(0,2,3,1,4).reshape(B,H,W,C)
 
-        weight=(c_embed+h_embed+w_embed).permute(0,3,1,
+        weight=(c_embed+h_embed+w_embed).permute(0,3,1,2).flatten(2).mean(2)
+        weight=self.reweighting(weight).reshape(B,C,3).permute(2,0,1).softmax(0).unsqueeze(2).unsqueeze(2)
+
+        x=c_embed*weight[0]+w_embed*weight[1]+h_embed*weight[2]
+
+        x=self.proj_drop(self.proj(x))
+
+        return x
+
+
+
+if __name__ == '__main__':
+    input=torch.randn(64,8,8,512)
+    seg_dim=8
+    vip=WeightedPermuteMLP(512,seg_dim)
+    out=vip(input)
+    print(out.shape)
+    
